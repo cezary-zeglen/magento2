@@ -461,6 +461,18 @@ class Translate implements \Magento\Framework\TranslateInterface
     }
 
     /**
+     * Set theme
+     *
+     * @param string $theme
+     * @return \Magento\Framework\TranslateInterface
+     */
+    public function setTheme($theme)
+    {
+        $this->_config[self::CONFIG_THEME_KEY] = $theme;
+        return $this;
+    }
+
+    /**
      * Retrieve cache identifier
      *
      * @param bool $forceReload

@@ -5,6 +5,8 @@
  */
 namespace Magento\Catalog\Model;
 
+use \Magento\Framework\TranslateInterface;
+
 /**
  * Catalog Custom Category design Model
  *
@@ -32,12 +34,24 @@ class Design extends \Magento\Framework\Model\AbstractModel
     protected $_localeDate;
 
     /**
+     * @var \Magento\Framework\View\Design\ThemeInterfaceFactory
+     */
+    protected $_themeFactory;
+
+    /**
+     * @var TranslateInterface
+     */
+    private $translator;
+
+    /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Framework\View\DesignInterface $design
+     * @param \Magento\Framework\View\Design\ThemeInterfaceFactory $themeFactory
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
+     * @param TranslateInterface $translator
      * @param array $data
      */
     public function __construct(
@@ -45,12 +59,18 @@ class Design extends \Magento\Framework\Model\AbstractModel
         \Magento\Framework\Registry $registry,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\Framework\View\DesignInterface $design,
+        \Magento\Framework\View\Design\ThemeInterfaceFactory $themeFactory,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
-        array $data = []
+        array $data = [],
+        TranslateInterface $translator = null
     ) {
         $this->_localeDate = $localeDate;
         $this->_design = $design;
+        $this->_themeFactory = $themeFactory;
+        $this->translator = $translator ?:
+            \Magento\Framework\App\ObjectManager::getInstance()->get(TranslateInterface::class);
+
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
@@ -63,6 +83,20 @@ class Design extends \Magento\Framework\Model\AbstractModel
     public function applyCustomDesign($design)
     {
         $this->_design->setDesignTheme($design);
+        $this->applyCustomDesingTranslations($design);
+        return $this;
+    }
+
+    /**
+     * Apply custom design translations
+     *
+     * @param string $design
+     * @return $this
+     */
+    private function applyCustomDesingTranslations($design)
+    {
+        $theme = $this->_themeFactory->create()->load($design)->getThemePath();
+        $this->translator->setTheme($theme)->loadData(null, true);
         return $this;
     }
 
