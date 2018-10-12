@@ -6,6 +6,7 @@
 namespace Magento\Catalog\Model;
 
 use \Magento\Framework\TranslateInterface;
+use \Magento\Framework\View\Design\ThemeInterfaceFactory;
 
 /**
  * Catalog Custom Category design Model
@@ -34,9 +35,9 @@ class Design extends \Magento\Framework\Model\AbstractModel
     protected $_localeDate;
 
     /**
-     * @var \Magento\Framework\View\Design\ThemeInterfaceFactory
+     * @var ThemeInterfaceFactory
      */
-    protected $_themeFactory;
+    private $themeFactory;
 
     /**
      * @var TranslateInterface
@@ -48,9 +49,9 @@ class Design extends \Magento\Framework\Model\AbstractModel
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Framework\View\DesignInterface $design
-     * @param \Magento\Framework\View\Design\ThemeInterfaceFactory $themeFactory
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
+     * @param ThemeInterfaceFactory $themeFactory
      * @param TranslateInterface $translator
      * @param array $data
      */
@@ -59,15 +60,16 @@ class Design extends \Magento\Framework\Model\AbstractModel
         \Magento\Framework\Registry $registry,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\Framework\View\DesignInterface $design,
-        \Magento\Framework\View\Design\ThemeInterfaceFactory $themeFactory,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [],
+        ThemeInterfaceFactory $themeFactory = null,
         TranslateInterface $translator = null
     ) {
         $this->_localeDate = $localeDate;
         $this->_design = $design;
-        $this->_themeFactory = $themeFactory;
+        $this->themeFactory = $themeFactory ?:
+            \Magento\Framework\App\ObjectManager::getInstance()->get(ThemeInterfaceFactory::class);
         $this->translator = $translator ?:
             \Magento\Framework\App\ObjectManager::getInstance()->get(TranslateInterface::class);
 
@@ -77,7 +79,7 @@ class Design extends \Magento\Framework\Model\AbstractModel
     /**
      * Apply custom design
      *
-     * @param string $design
+     * @param \Magento\Framework\View\Design\ThemeInterface|string $design
      * @return $this
      */
     public function applyCustomDesign($design)
@@ -90,12 +92,13 @@ class Design extends \Magento\Framework\Model\AbstractModel
     /**
      * Apply custom design translations
      *
-     * @param string $design
+     * @param \Magento\Framework\View\Design\ThemeInterface|string $design
      * @return $this
      */
     private function applyCustomDesingTranslations($design)
     {
-        $theme = $this->_themeFactory->create()->load($design)->getThemePath();
+        $design = (is_string($design)) ? $design : $design->getId();
+        $theme = $this->themeFactory->create()->load($design)->getThemePath();
         $this->translator->setTheme($theme)->loadData(null, true);
         return $this;
     }
